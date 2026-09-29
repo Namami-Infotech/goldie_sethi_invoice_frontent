@@ -1,0 +1,213 @@
+import React from 'react';
+import {
+  LayoutDashboard,
+  Receipt,
+  PlusCircle,
+  Package,
+  Users,
+  Settings,
+  Building2,
+  Sparkles,
+  ChevronRight,
+  X
+} from 'lucide-react';
+
+export default function Sidebar({
+  activeTab,
+  setActiveTab,
+  companySetting,
+  mobileOpen,
+  setMobileOpen
+}) {
+  const navItems = [
+    {
+      id: 'dashboard',
+      label: 'Dashboard',
+      icon: LayoutDashboard,
+      desc: 'Overview & Stats'
+    },
+    {
+      id: 'invoices',
+      label: 'Invoices',
+      icon: Receipt,
+      desc: 'History & Status'
+    },
+    {
+      id: 'items',
+      label: 'Items Catalog',
+      icon: Package,
+      desc: 'HSN/SAC & Rates'
+    },
+    {
+      id: 'users',
+      label: 'Users & Roles',
+      icon: Users,
+      desc: 'Clients & Admins'
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      icon: Settings,
+      desc: 'Company & Bank'
+    }
+  ];
+
+  const handleNavClick = (id) => {
+    setActiveTab(id);
+    if (setMobileOpen) setMobileOpen(false);
+  };
+
+  return (
+    <>
+      {/* Mobile Backdrop */}
+      {mobileOpen && (
+        <div
+          onClick={() => setMobileOpen(false)}
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 lg:hidden no-print"
+        />
+      )}
+
+      {/* Sidebar Container with optimized viewport height */}
+      <aside
+        className={`fixed top-0 bottom-0 left-0 z-50 w-64 bg-slate-900 text-white flex flex-col transition-transform duration-300 ease-in-out border-r border-slate-800 no-print lg:translate-x-0 h-screen max-h-screen ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {/* Brand Header (Sleek h-16 / 64px) */}
+        <div className="h-16 px-4 flex items-center justify-between border-b border-slate-800/80 flex-shrink-0">
+          <div
+            className="flex items-center space-x-2.5 cursor-pointer group"
+            onClick={() => handleNavClick('dashboard')}
+          >
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/25 group-hover:scale-105 transition-transform flex-shrink-0">
+              <Receipt className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center space-x-1.5">
+                <span
+                  className="font-extrabold text-base tracking-tight text-white truncate max-w-[130px] block"
+                  title={companySetting?.companyName || 'GST Portal'}
+                >
+                  {companySetting?.companyName || 'GST Portal'}
+                </span>
+                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex-shrink-0">
+                  GST
+                </span>
+              </div>
+              <p
+                className="text-[11px] text-slate-400 truncate max-w-[135px]"
+                title={companySetting?.gstin ? `GSTIN: ${companySetting.gstin}` : 'Pro Invoicing'}
+              >
+                {companySetting?.gstin ? `GSTIN: ${companySetting.gstin}` : (companySetting?.city ? `${companySetting.city}, ${companySetting?.state || ''}` : 'Pro Invoicing')}
+              </p>
+            </div>
+          </div>
+
+          {/* Mobile close button */}
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 lg:hidden"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+       
+
+        {/* Navigation Links with comfortable compact height */}
+        <nav className="flex-1 px-2.5 py-1 space-y-1 overflow-y-auto">
+          <p className="px-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+            Main Menu
+          </p>
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleNavClick(item.id)}
+                className={`w-full h-11 flex items-center justify-between px-3 rounded-xl text-left transition-all ${
+                  isActive
+                    ? 'bg-indigo-600 text-white font-semibold shadow-xs'
+                    : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                }`}
+              >
+                <div className="flex items-center space-x-2.5 min-w-0">
+                  <div
+                    className={`p-1.5 rounded-lg flex-shrink-0 ${
+                      isActive ? 'bg-white/20 text-white' : 'text-slate-400'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div className="truncate">
+                    <div className="text-xs font-medium leading-tight">{item.label}</div>
+                    <div
+                      className={`text-[10px] leading-tight truncate ${
+                        isActive ? 'text-indigo-200' : 'text-slate-400'
+                      }`}
+                    >
+                      {item.desc}
+                    </div>
+                  </div>
+                </div>
+
+                {isActive && <ChevronRight className="w-3.5 h-3.5 text-indigo-200 flex-shrink-0" />}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Live Tax Engine Status Widget (Compact height) */}
+        <div className="p-2.5 mx-2.5 mb-2 rounded-xl bg-slate-800/70 border border-slate-700/60 text-xs space-y-1.5 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 flex items-center space-x-1">
+              <Sparkles className="w-3 h-3" />
+              <span>Tax Origin</span>
+            </span>
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          </div>
+
+          <div className="bg-slate-900/70 px-2 py-1.5 rounded-lg border border-slate-700/40 flex items-center justify-between">
+            <div className="flex items-center space-x-1.5 text-white font-bold text-xs truncate">
+              <Building2 className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+              <span className="truncate">{companySetting?.state || 'Not Set'}</span>
+            </div>
+            <span className="text-[9px] px-1 py-0.5 rounded bg-slate-800 font-mono text-slate-300">
+              {companySetting?.gstin ? 'GSTIN' : 'Active'}
+            </span>
+          </div>
+
+          <p className="text-[10px] text-slate-400 leading-tight">
+            Same State: <strong className="text-blue-300">CGST+SGST</strong> | Diff: <strong className="text-amber-300">IGST</strong>
+          </p>
+        </div>
+
+        {/* Sidebar Footer */}
+        <div className="h-12 px-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 flex-shrink-0">
+          <div className="truncate pr-2">
+            <p
+              className="font-semibold text-slate-300 text-[11px] truncate"
+              title={companySetting?.companyName || 'Company Profile'}
+            >
+              {companySetting?.companyName || 'Company Profile'}
+            </p>
+            <p className="text-[9px] text-slate-400 truncate">
+              {companySetting?.city ? `${companySetting.city}${companySetting?.state ? `, ${companySetting.state}` : ''}` : (companySetting?.state || 'GST Registered')}
+            </p>
+          </div>
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={() => handleNavClick('settings')}
+              className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              title="Open Settings"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}
