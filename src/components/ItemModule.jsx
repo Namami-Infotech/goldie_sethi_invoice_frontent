@@ -5,7 +5,6 @@ import {
   Search,
   Edit2,
   Trash2,
-  IndianRupee,
   RefreshCw,
   AlertCircle
 } from 'lucide-react';
@@ -30,9 +29,7 @@ export default function ItemModule() {
   const [formData, setFormData] = useState({
     name: '',
     hsnSac: '',
-    qty: 1,
     unit: 'Pcs',
-    pricePerUnit: '',
     gstRate: 18
   });
 
@@ -70,9 +67,7 @@ export default function ItemModule() {
     setFormData({
       name: '',
       hsnSac: '',
-      qty: 1,
       unit: 'Pcs',
-      pricePerUnit: '',
       gstRate: 18
     });
     setError('');
@@ -84,10 +79,8 @@ export default function ItemModule() {
     setFormData({
       name: item.name,
       hsnSac: item.hsnSac || '',
-      qty: item.qty,
       unit: item.unit || 'Pcs',
-      pricePerUnit: item.pricePerUnit,
-      gstRate: item.gstRate
+      gstRate: item.gstRate !== undefined && item.gstRate !== null ? Number(item.gstRate) : 18
     });
     setError('');
     setModalOpen(true);
@@ -100,11 +93,20 @@ export default function ItemModule() {
       return;
     }
 
+    const payload = {
+      name: formData.name.trim(),
+      hsnSac: formData.hsnSac || '',
+      unit: formData.unit || 'Pcs',
+      gstRate: formData.gstRate !== undefined && formData.gstRate !== null && formData.gstRate !== ''
+        ? Number(formData.gstRate)
+        : 18
+    };
+
     try {
       if (editingItem) {
-        await itemService.update(editingItem.id, formData);
+        await itemService.update(editingItem.id, payload);
       } else {
-        await itemService.create(formData);
+        await itemService.create(payload);
       }
       setModalOpen(false);
       fetchItems();
@@ -163,20 +165,21 @@ export default function ItemModule() {
                 <th className="py-3.5 px-4">Item Name</th>
                 <th className="py-3.5 px-4">HSN / SAC Code</th>
                 <th className="py-3.5 px-4 text-center">Unit</th>
+                <th className="py-3.5 px-4 text-center">GST Rate</th>
                 <th className="py-3.5 px-4 text-center w-28">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading && items.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="py-12 text-center text-slate-400">
+                  <td colSpan="6" className="py-12 text-center text-slate-400">
                     <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500" />
                     Loading items catalog...
                   </td>
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="py-12 text-center text-slate-500">
+                  <td colSpan="6" className="py-12 text-center text-slate-500">
                     No items found. Click "Add New Item" to create one.
                   </td>
                 </tr>
@@ -201,6 +204,11 @@ export default function ItemModule() {
                     <td className="py-3.5 px-4 text-center">
                       <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                         {item.unit || 'Pcs'}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-center">
+                      <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        {item.gstRate !== undefined && item.gstRate !== null ? `${item.gstRate}%` : '0%'}
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-center">
@@ -277,7 +285,7 @@ export default function ItemModule() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                     HSN / SAC Code
@@ -302,6 +310,22 @@ export default function ItemModule() {
                     {UNITS.map((u) => (
                       <option key={u} value={u}>
                         {u}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                    GST Rate (%)
+                  </label>
+                  <select
+                    value={formData.gstRate}
+                    onChange={(e) => setFormData({ ...formData, gstRate: Number(e.target.value) })}
+                    className="w-full h-10 px-3.5 border border-slate-200 rounded-xl text-sm bg-white font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all shadow-2xs"
+                  >
+                    {GST_RATES.map((rate) => (
+                      <option key={rate} value={rate}>
+                        {rate}%
                       </option>
                     ))}
                   </select>
