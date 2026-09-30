@@ -10,8 +10,7 @@ import {
   Building2,
   Receipt,
   ArrowRight,
-  AlertCircle,
-  KeyRound
+  AlertCircle
 } from 'lucide-react';
 import { authService } from '../services/api';
 
@@ -51,12 +50,6 @@ export default function Login({ onLoginSuccess, companySetting }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleQuickFillAdmin = () => {
-    setIdentifier('admin@namamienterprises.com');
-    setPassword('123456');
-    setError('');
   };
 
   return (
@@ -170,22 +163,6 @@ export default function Login({ onLoginSuccess, companySetting }) {
             )}
           </button>
         </form>
-
-        {/* Quick Fill Demo Helper for Admin */}
-        <div className="mt-6 pt-4 border-t border-slate-100 text-center">
-          <p className="text-[11px] font-semibold text-slate-400 mb-2">
-            Default Admin Credentials
-          </p>
-          <button
-            type="button"
-            onClick={handleQuickFillAdmin}
-            className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-indigo-700 text-xs font-mono transition-colors cursor-pointer group shadow-2xs"
-          >
-            <KeyRound className="w-3.5 h-3.5 text-indigo-600 group-hover:rotate-12 transition-transform" />
-            <span className="font-semibold">admin@namamienterprises.com / 123456</span>
-            <span className="text-[10px] text-slate-500 ml-1 font-sans">(Click to fill)</span>
-          </button>
-        </div>
 
         {/* Security Notice */}
         <div className="mt-4 flex items-center justify-center space-x-1.5 text-[11px] text-slate-400">
