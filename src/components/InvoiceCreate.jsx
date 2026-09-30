@@ -11,6 +11,7 @@ import {
   IndianRupee,
   Save,
   ArrowRight,
+  ArrowLeft,
   Sparkles,
   Info,
   Search,
@@ -19,7 +20,7 @@ import {
   X
 } from 'lucide-react';
 import { invoiceService, itemService, userService } from '../services/api';
-import { INDIAN_STATES, UNITS, GST_RATES } from '../utils/states';
+import { formatDateDDMMYYYY, toISODate, getTodayISODate } from '../utils/date';
 
 // Single Searchable Combobox Component for Customers / Clients
 function SearchableCustomerSelect({
@@ -399,6 +400,87 @@ function SearchableItemSelect({ row, index, allItems, catalogItems, onSelectItem
   );
 }
 
+// Guaranteed DD/MM/YYYY Formatted Date Input with Native Picker Popover
+function DateInputDDMMYYYY({ value, onChange, className }) {
+  const hiddenDateRef = React.useRef(null);
+  const [inputText, setInputText] = useState(() => formatDateDDMMYYYY(value));
+
+  useEffect(() => {
+    setInputText(formatDateDDMMYYYY(value));
+  }, [value]);
+
+  const handleTextChange = (e) => {
+    const raw = e.target.value;
+    setInputText(raw);
+
+    const clean = raw.replace(/-/g, '/');
+    const match = clean.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (match) {
+      const [, d, m, y] = match;
+      const dNum = parseInt(d, 10);
+      const mNum = parseInt(m, 10);
+      const yNum = parseInt(y, 10);
+      if (dNum >= 1 && dNum <= 31 && mNum >= 1 && mNum <= 12 && yNum >= 2000 && yNum <= 2099) {
+        onChange(`${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`);
+      }
+    }
+  };
+
+  const handleBlur = () => {
+    setInputText(formatDateDDMMYYYY(value));
+  };
+
+  const handleCalendarPick = (e) => {
+    const isoVal = e.target.value;
+    if (isoVal) {
+      onChange(isoVal);
+      setInputText(formatDateDDMMYYYY(isoVal));
+    }
+  };
+
+  const openPicker = () => {
+    if (hiddenDateRef.current) {
+      if (typeof hiddenDateRef.current.showPicker === 'function') {
+        hiddenDateRef.current.showPicker();
+      } else {
+        hiddenDateRef.current.focus();
+        hiddenDateRef.current.click();
+      }
+    }
+  };
+
+  return (
+    <div className="relative flex items-center w-full">
+      <input
+        type="text"
+        required
+        placeholder="DD/MM/YYYY"
+        value={inputText}
+        onChange={handleTextChange}
+        onBlur={handleBlur}
+        className={`${className} pr-8 font-medium`}
+      />
+      <input
+        ref={hiddenDateRef}
+        type="date"
+        value={toISODate(value) || ''}
+        onChange={handleCalendarPick}
+        className="sr-only"
+        tabIndex={-1}
+      />
+      <button
+        type="button"
+        onClick={openPicker}
+        className="absolute right-2.5 p-1 text-slate-400 hover:text-indigo-600 rounded transition-colors cursor-pointer"
+        title="Open Calendar"
+        tabIndex={-1}
+      >
+        <Calendar className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
+}
+
 export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCancel }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -652,7 +734,7 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
 
       const payload = {
         invoiceNumber: nextInvoiceNumber,
-        invoiceDate,
+        invoiceDate: toISODate(invoiceDate) || invoiceDate,
         dueDate: null,
         userId: selectedUserId || null,
         customerName: customerName.trim(),
@@ -693,6 +775,16 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
       {/* Sleek Compact Header */}
       <div className="bg-white px-4 py-2.5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between flex-shrink-0">
         <div className="flex items-center space-x-2.5 min-w-0">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-bold text-white bg-slate-800 hover:bg-slate-900 rounded-lg shadow-xs transition-all cursor-pointer"
+            title="Back to invoices"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Back</span>
+          </button>
+
           <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0 border border-indigo-100/70">
             <FileText className="w-3.5 h-3.5" />
           </div>
@@ -752,11 +844,9 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
                   Invoice Date *
                 </label>
               </div>
-              <input
-                type="date"
-                required
+              <DateInputDDMMYYYY
                 value={invoiceDate}
-                onChange={(e) => setInvoiceDate(e.target.value)}
+                onChange={(newVal) => setInvoiceDate(newVal)}
                 className="w-full h-9 px-3 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all shadow-2xs"
               />
             </div>
@@ -806,7 +896,7 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
                   <th className="py-2.5 px-3 min-w-[200px]">Item Description</th>
                   <th className="py-2.5 px-2 w-24">HSN/SAC</th>
                   <th className="py-2.5 px-2 w-16 text-center">Qty</th>
-                  <th className="py-2.5 px-2 w-20">Unit</th>
+                  <th className="py-2.5 px-2 w-20 text-center">Unit</th>
                   <th className="py-2.5 px-2 w-24 text-right">Price/Unit (₹)</th>
                   <th className="py-2.5 px-2 w-24 text-right">Taxable (₹)</th>
                   <th className="py-2.5 px-2 w-20 text-center">GST %</th>
@@ -856,18 +946,10 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
                     </td>
 
                     {/* Unit */}
-                    <td className="py-2 px-2">
-                      <select
-                        value={row.unit}
-                        onChange={(e) => handleRowChange(index, 'unit', e.target.value)}
-                        className="w-full h-9 px-1.5 text-xs border border-slate-200 rounded-lg bg-white font-medium focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-                      >
-                        {UNITS.map((u) => (
-                          <option key={u} value={u}>
-                            {u}
-                          </option>
-                        ))}
-                      </select>
+                    <td className="py-2 px-2 text-center">
+                      <span className="inline-flex items-center justify-center min-w-[50px] h-8 px-2 text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg">
+                        {row.unit || 'Pcs'}
+                      </span>
                     </td>
 
                     {/* Price/Unit */}
@@ -890,17 +972,9 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
 
                     {/* GST Rate */}
                     <td className="py-2 px-2 text-center">
-                      <select
-                        value={row.gstRate}
-                        onChange={(e) => handleRowChange(index, 'gstRate', Number(e.target.value))}
-                        className="w-full h-9 px-1 text-xs border border-slate-200 rounded-lg bg-white font-bold text-indigo-700 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-                      >
-                        {GST_RATES.map((rate) => (
-                          <option key={rate} value={rate}>
-                            {rate}%
-                          </option>
-                        ))}
-                      </select>
+                      <span className="inline-flex items-center justify-center min-w-[50px] h-8 px-2 text-xs font-bold text-indigo-700 bg-indigo-50/80 border border-indigo-100 rounded-lg font-mono">
+                        {row.gstRate ?? 18}%
+                      </span>
                     </td>
 
                     {/* Row Total */}

@@ -10,6 +10,7 @@ import {
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { settingService } from '../services/api';
+import { formatDateDDMMYYYY } from '../utils/date';
 
 // Number to Indian words converter for GST invoices
 function numberToWords(num) {
@@ -390,7 +391,7 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
                     <span className="font-bold font-mono">{invoice.invoiceNumber}</span>
                   </p>
                   <p>
-                    <span className="font-semibold">Date:</span> {invoice.invoiceDate}
+                    <span className="font-semibold">Date:</span> {formatDateDDMMYYYY(invoice.invoiceDate)}
                   </p>
                   <p>
                     <span className="font-semibold">Place Of Supply:</span>{' '}
@@ -398,7 +399,7 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
                   </p>
                   {invoice.dueDate && (
                     <p>
-                      <span className="font-semibold">Due Date:</span> {invoice.dueDate}
+                      <span className="font-semibold">Due Date:</span> {formatDateDDMMYYYY(invoice.dueDate)}
                     </p>
                   )}
                 </td>

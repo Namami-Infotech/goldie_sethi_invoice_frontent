@@ -16,6 +16,7 @@ import {
 import { invoiceService } from '../services/api';
 import Pagination from './Pagination';
 import DeleteConfirmModal from './DeleteConfirmModal';
+import { formatDateDDMMYYYY } from '../utils/date';
 
 export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState }) {
   const [invoices, setInvoices] = useState([]);
@@ -336,8 +337,8 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-4 text-xs text-slate-600 whitespace-nowrap">
-                      {inv.invoiceDate}
+                    <td className="py-3.5 px-4 text-xs text-slate-600 whitespace-nowrap font-medium">
+                      {formatDateDDMMYYYY(inv.invoiceDate)}
                     </td>
 
                     <td className="py-3.5 px-4">

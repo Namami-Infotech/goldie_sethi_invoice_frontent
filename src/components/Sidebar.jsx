@@ -155,30 +155,6 @@ export default function Sidebar({
           })}
         </nav>
 
-        {/* Live Tax Engine Status Widget (Compact height) */}
-        <div className="p-2.5 mx-2.5 mb-2 rounded-xl bg-slate-800/70 border border-slate-700/60 text-xs space-y-1.5 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 flex items-center space-x-1">
-              <Sparkles className="w-3 h-3" />
-              <span>Tax Origin</span>
-            </span>
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          </div>
-
-          <div className="bg-slate-900/70 px-2 py-1.5 rounded-lg border border-slate-700/40 flex items-center justify-between">
-            <div className="flex items-center space-x-1.5 text-white font-bold text-xs truncate">
-              <Building2 className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
-              <span className="truncate">{companySetting?.state || 'Not Set'}</span>
-            </div>
-            <span className="text-[9px] px-1 py-0.5 rounded bg-slate-800 font-mono text-slate-300">
-              {companySetting?.gstin ? 'GSTIN' : 'Active'}
-            </span>
-          </div>
-
-          <p className="text-[10px] text-slate-400 leading-tight">
-            Same State: <strong className="text-blue-300">CGST+SGST</strong> | Diff: <strong className="text-amber-300">IGST</strong>
-          </p>
-        </div>
 
         {/* Sidebar Footer */}
         <div className="h-12 px-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 flex-shrink-0">

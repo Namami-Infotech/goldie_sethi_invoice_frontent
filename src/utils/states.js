@@ -40,16 +40,16 @@ export const INDIAN_STATES = [
 export const UNITS = [
   'Pcs',
   'Nos',
-  'Kg',
-  'Mtr',
-  'Box',
-  'Pack',
-  'Set',
-  'Ltr',
-  'Hour',
-  'Day',
-  'Month',
-  'Year'
+  // 'Kg',
+  // 'Mtr',
+  // 'Box',
+  // 'Pack',
+  // 'Set',
+  // 'Ltr',
+  // 'Hour',
+  // 'Day',
+  // 'Month',
+  // 'Year'
 ];
 
 export const GST_RATES = [0, 5, 12, 18, 28];
