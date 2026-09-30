@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// const API_BASE_URL = 'http://localhost:5000/api';
+// const API_BASE_URL = 'http://localhost:5008/api';
 const API_BASE_URL = 'https://www.namami-infotech.com/invoice/api';
 
 const api = axios.create({
@@ -9,6 +9,51 @@ const api = axios.create({
     'Content-Type': 'application/json'
   }
 });
+
+api.interceptors.request.use((config) => {
+  try {
+    const token = localStorage.getItem('admin_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch (e) { }
+  return config;
+});
+
+export const authService = {
+  login: async (identifier, password) => {
+    try {
+      return await api.post('/auth/login', { identifier, password });
+    } catch (err) {
+      // Fallback if /auth route isn't available
+      if (err.response && err.response.status === 404) {
+        return await api.post('/users/login', { identifier, password });
+      }
+      throw err;
+    }
+  },
+  getMe: () => api.get('/auth/me'),
+  logout: () => {
+    try {
+      localStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_user');
+    } catch (e) { }
+  },
+  getCurrentUser: () => {
+    try {
+      const stored = localStorage.getItem('admin_user');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  },
+  saveSession: (token, user) => {
+    try {
+      if (token) localStorage.setItem('admin_token', token);
+      if (user) localStorage.setItem('admin_user', JSON.stringify(user));
+    } catch (e) { }
+  }
+};
 
 export const itemService = {
   getAll: (search = '') => api.get(`/items?search=${encodeURIComponent(search)}`),

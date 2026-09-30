@@ -8,7 +8,8 @@ import SettingModule from './components/SettingModule';
 import InvoiceCreate from './components/InvoiceCreate';
 import InvoiceList from './components/InvoiceList';
 import InvoiceViewModal from './components/InvoiceViewModal';
-import { settingService, invoiceService } from './services/api';
+import Login from './components/Login';
+import { settingService, invoiceService, authService } from './services/api';
 
 const muiTheme = createTheme({
   palette: {
@@ -25,6 +26,7 @@ const muiTheme = createTheme({
 });
 
 export default function App() {
+  const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUser());
   const [activeTab, setActiveTab] = useState('invoices');
   const [companySetting, setCompanySetting] = useState(null);
   const [viewingInvoice, setViewingInvoice] = useState(null);
@@ -72,6 +74,23 @@ export default function App() {
     }
   };
 
+  const handleLogout = () => {
+    authService.logout();
+    setCurrentUser(null);
+  };
+
+  // If not logged in, enforce Admin Login screen
+  if (!currentUser) {
+    return (
+      <ThemeProvider theme={muiTheme}>
+        <Login
+          onLoginSuccess={(user) => setCurrentUser(user)}
+          companySetting={companySetting}
+        />
+      </ThemeProvider>
+    );
+  }
+
   return (
     <ThemeProvider theme={muiTheme}>
       <div className="min-h-screen bg-slate-50 text-slate-900 flex">
@@ -82,6 +101,8 @@ export default function App() {
           companySetting={companySetting}
           mobileOpen={mobileOpen}
           setMobileOpen={setMobileOpen}
+          currentUser={currentUser}
+          onLogout={handleLogout}
         />
 
         {/* Right Main Content Panel (offset by sidebar width on lg screens) */}
@@ -92,6 +113,8 @@ export default function App() {
             setActiveTab={setActiveTab}
             companySetting={companySetting}
             setMobileOpen={setMobileOpen}
+            currentUser={currentUser}
+            onLogout={handleLogout}
           />
 
           {/* Main Views Container */}

@@ -8,7 +8,8 @@ import {
   Building2,
   Sparkles,
   ChevronRight,
-  X
+  X,
+  LogOut
 } from 'lucide-react';
 
 export default function Sidebar({
@@ -16,7 +17,9 @@ export default function Sidebar({
   setActiveTab,
   companySetting,
   mobileOpen,
-  setMobileOpen
+  setMobileOpen,
+  currentUser,
+  onLogout
 }) {
   const navItems = [
     {
@@ -190,14 +193,23 @@ export default function Sidebar({
               {companySetting?.city ? `${companySetting.city}${companySetting?.state ? `, ${companySetting.state}` : ''}` : (companySetting?.state || 'GST Registered')}
             </p>
           </div>
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1 flex-shrink-0">
             <button
               onClick={() => handleNavClick('settings')}
-              className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
               title="Open Settings"
             >
               <Settings className="w-4 h-4" />
             </button>
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="p-1.5 rounded-lg hover:bg-rose-900/40 text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
+                title="Logout Admin"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       </aside>

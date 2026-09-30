@@ -6,14 +6,17 @@ import {
   Receipt,
   Sparkles,
   ShieldCheck,
-  User
+  User,
+  LogOut
 } from 'lucide-react';
 
 export default function Header({
   activeTab,
   setActiveTab,
   companySetting,
-  setMobileOpen
+  setMobileOpen,
+  currentUser,
+  onLogout
 }) {
   const titles = {
     invoices: { title: 'Invoices Directory', subtitle: 'Manage, search and print issued GST invoices' },
@@ -80,21 +83,33 @@ export default function Header({
         </div>
 
         {/* Admin Workspace Badge */}
-        <div className="flex items-center space-x-2 pl-2 border-l border-slate-200">
+        <div className="flex items-center space-x-2.5 pl-2 border-l border-slate-200">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-bold text-xs flex items-center justify-center shadow-xs">
-              AD
+              {currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'AD'}
             </div>
             <div className="hidden md:block text-left text-xs leading-none">
-              <div className="font-bold text-slate-800 text-[11px] truncate max-w-[120px]">
-                Administrator
+              <div className="font-bold text-slate-800 text-[11px] truncate max-w-[120px]" title={currentUser?.name || 'Administrator'}>
+                {currentUser?.name || 'Administrator'}
               </div>
               <div className="text-[9px] text-emerald-600 font-semibold mt-0.5 flex items-center space-x-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>ONLINE</span>
+                <span>ADMIN ONLINE</span>
               </div>
             </div>
           </div>
+
+          {/* Logout Action Button */}
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="flex items-center space-x-1.5 h-8 px-2.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:border-rose-300 text-xs font-semibold transition-colors cursor-pointer shadow-xs ml-1"
+              title="Logout Admin"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline text-[11px]">Logout</span>
+            </button>
+          )}
         </div>
       </div>
     </header>
