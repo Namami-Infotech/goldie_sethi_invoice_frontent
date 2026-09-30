@@ -21,6 +21,175 @@ import {
 import { invoiceService, itemService, userService } from '../services/api';
 import { INDIAN_STATES, UNITS, GST_RATES } from '../utils/states';
 
+// Single Searchable Combobox Component for Customers / Clients
+function SearchableCustomerSelect({
+  customerName,
+  selectedUserId,
+  userList,
+  onSelectUser,
+  onChangeCustomerName,
+  onClear
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const wrapperRef = React.useRef(null);
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Filter users based on input value
+  const selectedUser = (userList || []).find((u) => String(u.id) === String(selectedUserId));
+  const isExactSelected = selectedUser && selectedUser.name.toLowerCase() === (customerName || '').trim().toLowerCase();
+
+  const filteredUsers = (userList || []).filter((u) => {
+    // If the input matches the currently selected user exactly, show all clients so user can easily switch
+    if (isExactSelected) return true;
+    const q = (customerName || '').trim().toLowerCase();
+    if (!q) return true;
+    const nameMatch = (u.name || '').toLowerCase().includes(q);
+    const stateMatch = (u.state || '').toLowerCase().includes(q);
+    const cityMatch = (u.city || '').toLowerCase().includes(q);
+    const phoneMatch = (u.contactNumber || '').includes(q);
+    const gstinMatch = (u.gstNumber || u.gstin || (u.pincode && u.pincode.length > 6 ? u.pincode : '') || '').toLowerCase().includes(q);
+    return nameMatch || stateMatch || cityMatch || phoneMatch || gstinMatch;
+  });
+
+  return (
+    <div className="relative" ref={wrapperRef}>
+      {/* Main Combobox Input */}
+      <div className="relative flex items-center">
+        <input
+          type="text"
+          required
+          placeholder="Search or select client..."
+          value={customerName || ''}
+          onChange={(e) => {
+            onChangeCustomerName(e.target.value);
+            setIsOpen(true);
+          }}
+          onFocus={() => setIsOpen(true)}
+          onClick={() => setIsOpen(true)}
+          className="w-full h-10 pl-3.5 pr-14 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder:text-slate-400 shadow-2xs transition-all"
+        />
+
+        <div className="absolute right-1.5 flex items-center space-x-0.5">
+          {customerName && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClear();
+              }}
+              className="p-1 text-slate-400 hover:text-slate-600 rounded transition-colors cursor-pointer"
+              title="Clear selection"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setIsOpen((prev) => !prev)}
+            className="p-1 text-slate-400 hover:text-slate-600 rounded transition-colors cursor-pointer"
+            title="Browse clients"
+            tabIndex={-1}
+          >
+            <ChevronDown
+              className={`w-4 h-4 transition-transform duration-200 ${
+                isOpen ? 'rotate-180 text-indigo-600' : ''
+              }`}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Sleek Dropdown Popover */}
+      {isOpen && (
+        <div className="absolute left-0 top-full mt-1.5 w-full bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden text-xs">
+          <div className="px-3 py-1.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            <span>Clients ({filteredUsers.length})</span>
+            {customerName && !isExactSelected && (
+              <span className="text-indigo-600 lowercase font-medium">filter: "{customerName}"</span>
+            )}
+          </div>
+
+          {/* Client List */}
+          <div className="max-h-56 overflow-y-auto divide-y divide-slate-100">
+            {filteredUsers.length > 0 ? (
+              filteredUsers.map((u) => {
+                const isSelected =
+                  (selectedUserId && String(selectedUserId) === String(u.id)) ||
+                  (customerName && customerName.trim().toLowerCase() === (u.name || '').trim().toLowerCase());
+
+                return (
+                  <div
+                    key={u.id}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      onSelectUser(u);
+                      setIsOpen(false);
+                    }}
+                    className={`p-2.5 transition-colors flex items-center justify-between cursor-pointer ${
+                      isSelected
+                        ? 'bg-indigo-50/90 font-semibold'
+                        : 'hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="min-w-0 pr-2">
+                      <div className="text-slate-900 font-semibold truncate flex items-center space-x-2">
+                        <span className="truncate text-xs">{u.name}</span>
+                        {u.state && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 flex-shrink-0">
+                            {u.state}
+                          </span>
+                        )}
+                        {u.city && (
+                          <span className="text-[10px] text-slate-500 font-normal">
+                            ({u.city})
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="text-[11px] text-slate-500 mt-0.5 flex items-center space-x-3 truncate">
+                        {u.contactNumber && (
+                          <span>Phone: <strong className="text-slate-700">{u.contactNumber}</strong></span>
+                        )}
+                        {(u.gstNumber || u.gstin || (u.pincode && u.pincode.length > 6 ? u.pincode : '')) && (
+                          <span className="font-mono">GSTIN: <strong className="text-slate-700">{u.gstNumber || u.gstin || u.pincode}</strong></span>
+                        )}
+                      </div>
+                    </div>
+
+                    {isSelected && (
+                      <div className="p-1 rounded-full bg-indigo-600 text-white flex-shrink-0">
+                        <Check className="w-3 h-3" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            ) : (
+              <div className="p-4 text-center text-slate-500 space-y-1">
+                <p className="text-xs">No saved clients match "{customerName}"</p>
+                <p className="text-[11px] text-slate-400">
+                  You can proceed with "{customerName}" as a custom client name.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Single Searchable Dropdown Component for Catalog Items
 function SearchableItemSelect({ row, index, allItems, catalogItems, onSelectItem, onChangeName }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -245,6 +414,7 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
   const [customerAddress, setCustomerAddress] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
+  const [customerGstin, setCustomerGstin] = useState('');
 
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
   const [dueDate, setDueDate] = useState('');
@@ -277,10 +447,6 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
 
         if (usersRes.data.success) {
           setUserList(usersRes.data.data);
-          // If users exist, default to first client
-          if (usersRes.data.data.length > 0) {
-            handleSelectUser(usersRes.data.data[0]);
-          }
         }
 
         if (itemsRes.data.success) {
@@ -305,6 +471,18 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
     setCustomerAddress(user.fullAddress || '');
     setCustomerPhone(user.contactNumber || '');
     setCustomerEmail(user.email || '');
+    setCustomerGstin(user.gstNumber || user.gstin || (user.pincode && user.pincode.length > 6 ? user.pincode : '') || '');
+  };
+
+  const handleClearUser = () => {
+    setSelectedUserId('');
+    setCustomerName('');
+    setCustomerState('');
+    setCustomerCity('');
+    setCustomerAddress('');
+    setCustomerPhone('');
+    setCustomerEmail('');
+    setCustomerGstin('');
   };
 
   // Determine State Match
@@ -486,6 +664,7 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
         customerAddress,
         customerPhone,
         customerEmail,
+        customerGstin,
         status,
         notes,
         items: computedRows.map((r) => ({
@@ -514,22 +693,35 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
 
   return (
     <div className="space-y-6">
-      {/* Top Header Card */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center space-x-2">
-            <span className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
-              <FileText className="w-5 h-5" />
-            </span>
-            <h1 className="text-xl font-bold text-slate-900">Generate GST Tax Invoice</h1>
+      {/* Sleek Integrated Header & Seller Card */}
+      <div className="bg-white px-5 py-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div className="flex items-center space-x-3 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0 border border-indigo-100/70">
+            <FileText className="w-4.5 h-4.5" />
           </div>
-          <p className="text-sm text-slate-500 mt-1">
-            Dynamic Dual-GST calculation based on buyer state vs company state.
-          </p>
+          <div className="min-w-0">
+            <div className="flex items-center space-x-2">
+              <h1 className="text-base font-bold text-slate-900 tracking-tight">Generate Tax Invoice</h1>
+              <span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[9px] font-bold uppercase tracking-wider border border-indigo-100">
+                Dual-GST
+              </span>
+            </div>
+            <div className="flex items-center space-x-2 text-[11px] text-slate-500 mt-0.5 truncate">
+              <span className="font-semibold text-slate-700 truncate">{companySetting?.companyName || 'Company Profile'}</span>
+              <span>•</span>
+              <span className="truncate">{companySetting?.city || ''}{companySetting?.state ? `, ${companySetting.state}` : ''}</span>
+              {companySetting?.gstin && (
+                <>
+                  <span className="hidden sm:inline">•</span>
+                  <span className="font-mono text-slate-600 hidden sm:inline">GSTIN: <strong className="text-slate-700">{companySetting.gstin}</strong></span>
+                </>
+              )}
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center space-x-2 font-mono text-xs bg-slate-100 px-3 py-2 rounded-xl text-slate-700 border border-slate-200">
-          <span className="text-slate-400">Invoice No:</span>
+        <div className="flex items-center space-x-2.5 font-mono text-xs bg-slate-50 px-3 py-1.5 rounded-xl text-slate-700 border border-slate-200 self-start lg:self-auto flex-shrink-0">
+          <span className="text-slate-400 font-sans text-[10px] uppercase tracking-wider font-semibold">Invoice No:</span>
           <span className="font-bold text-indigo-600">{nextInvoiceNumber || 'Auto-generated'}</span>
         </div>
       </div>
@@ -541,92 +733,6 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
         </div>
       )}
 
-      {/* DYNAMIC SELLER / COMPANY PROFILE CARD */}
-      <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-        <div className="flex items-center space-x-3 min-w-0">
-          <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600 flex-shrink-0">
-            <Building className="w-4 h-4" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center space-x-2">
-              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                Seller / Supplier
-              </span>
-              <span className="font-bold text-slate-900 truncate">
-                {companySetting?.companyName || 'Company Profile'}
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-500 truncate mt-0.5">
-              {companySetting?.fullAddress ? `${companySetting.fullAddress}${companySetting.city ? `, ${companySetting.city}` : ''}` : (companySetting?.city || 'Address on file')}
-              {companySetting?.state ? ` • State: ${companySetting.state}` : ''}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap text-[11px] flex-shrink-0">
-          {companySetting?.gstin && (
-            <span className="font-mono bg-slate-100 text-slate-800 px-2 py-0.5 rounded border border-slate-200 font-semibold">
-              GSTIN: {companySetting.gstin}
-            </span>
-          )}
-          {companySetting?.phoneNo && (
-            <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200">
-              Tel: {companySetting.phoneNo}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* STATE MATCH ENGINE LIVE BANNER (Compact Low-Profile) */}
-      <div
-        className={`px-4 py-3 rounded-xl border transition-all shadow-2xs ${
-          !customerState
-            ? 'bg-slate-50 border-slate-200 text-slate-700'
-            : isSameState
-            ? 'bg-gradient-to-r from-blue-50/90 to-indigo-50/90 border-blue-200 text-blue-900'
-            : 'bg-gradient-to-r from-amber-50/90 to-orange-50/90 border-amber-200 text-amber-900'
-        }`}
-      >
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
-          <div className="flex items-center space-x-2.5 min-w-0">
-            <div
-              className={`p-1.5 rounded-lg flex-shrink-0 ${
-                !customerState
-                  ? 'bg-slate-200 text-slate-600'
-                  : isSameState
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-amber-600 text-white'
-              }`}
-            >
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center space-x-2 flex-wrap text-xs">
-                <span className="font-bold">Live GST Rule:</span>
-                <span className="text-[11px] font-semibold text-slate-700">
-                  Company (<strong>{companySetting?.state || 'Not Set'}</strong>) &rarr; Customer (<strong>{customerState || 'Select State'}</strong>)
-                </span>
-                <span className="text-[10px] px-2 py-0.2 rounded-full font-bold bg-white/90 border border-current shadow-2xs">
-                  {isSameState ? 'CGST (50%) + SGST (50%)' : 'IGST (100%)'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex-shrink-0 self-end sm:self-center">
-            <span
-              className={`text-xs font-black px-2.5 py-1 rounded-lg border bg-white shadow-2xs ${
-                isSameState
-                  ? 'text-blue-700 border-blue-200'
-                  : 'text-amber-700 border-amber-200'
-              }`}
-            >
-              {isSameState ? 'Central + State GST' : 'Integrated GST'}
-            </span>
-          </div>
-        </div>
-      </div>
-
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Customer & Invoice Meta Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -637,26 +743,6 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
                 <User className="w-4 h-4 text-indigo-600" />
                 <h3 className="font-bold text-slate-900 text-sm">Customer / Buyer Details</h3>
               </div>
-
-              {/* Quick User Picker */}
-              <div className="flex items-center space-x-2">
-                <label className="text-xs text-slate-500 font-medium">Quick Select:</label>
-                <select
-                  value={selectedUserId}
-                  onChange={(e) => {
-                    const u = userList.find((usr) => String(usr.id) === e.target.value);
-                    if (u) handleSelectUser(u);
-                  }}
-                  className="px-2.5 py-1 text-xs border border-slate-200 rounded-lg bg-slate-50 font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                >
-                  <option value="">Select Existing Customer</option>
-                  {userList.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name} ({u.state})
-                    </option>
-                  ))}
-                </select>
-              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -664,13 +750,13 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
                 <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                   Customer / Business Name *
                 </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Acme Corp / Rajesh Sharma"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full h-10 px-3.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all shadow-2xs"
+                <SearchableCustomerSelect
+                  customerName={customerName}
+                  selectedUserId={selectedUserId}
+                  userList={userList}
+                  onSelectUser={handleSelectUser}
+                  onChangeCustomerName={setCustomerName}
+                  onClear={handleClearUser}
                 />
               </div>
 
@@ -694,7 +780,7 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                   Contact Phone
@@ -731,6 +817,19 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
                   value={customerCity}
                   onChange={(e) => setCustomerCity(e.target.value)}
                   className="w-full h-10 px-3.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all shadow-2xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                  Customer GSTIN
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 24AAACN1234F1Z8"
+                  value={customerGstin}
+                  onChange={(e) => setCustomerGstin(e.target.value.toUpperCase())}
+                  className="w-full h-10 px-3.5 border border-slate-200 rounded-xl text-sm uppercase font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all shadow-2xs"
                 />
               </div>
             </div>
@@ -830,21 +929,6 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
                   <th className="py-3 px-3 w-28 text-right">Price/Unit (₹)</th>
                   <th className="py-3 px-3 w-28 text-right">Taxable (₹)</th>
                   <th className="py-3 px-3 w-24 text-center">GST %</th>
-                  {/* Dynamic Tax Columns based on state match */}
-                  {isSameState ? (
-                    <>
-                      <th className="py-3 px-3 w-28 text-right bg-blue-50/50 text-blue-800">
-                        CGST (₹)
-                      </th>
-                      <th className="py-3 px-3 w-28 text-right bg-blue-50/50 text-blue-800">
-                        SGST (₹)
-                      </th>
-                    </>
-                  ) : (
-                    <th className="py-3 px-3 w-32 text-right bg-amber-50/50 text-amber-800">
-                      IGST (₹)
-                    </th>
-                  )}
                   <th className="py-3 px-3 w-32 text-right font-bold">Total (₹)</th>
                   <th className="py-3 px-2 w-12 text-center">Del</th>
                 </tr>
@@ -938,25 +1022,6 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
                       </select>
                     </td>
 
-                    {/* Dynamic Tax Breakdown */}
-                    {isSameState ? (
-                      <>
-                        <td className="py-3 px-3 text-right font-mono text-xs bg-blue-50/40 text-blue-900">
-                          <div>₹{row.cgstAmount.toFixed(2)}</div>
-                          <span className="text-[10px] text-blue-600 font-sans">({row.cgstRate}%)</span>
-                        </td>
-                        <td className="py-3 px-3 text-right font-mono text-xs bg-blue-50/40 text-blue-900">
-                          <div>₹{row.sgstAmount.toFixed(2)}</div>
-                          <span className="text-[10px] text-blue-600 font-sans">({row.sgstRate}%)</span>
-                        </td>
-                      </>
-                    ) : (
-                      <td className="py-3 px-3 text-right font-mono text-xs bg-amber-50/40 text-amber-900">
-                        <div>₹{row.igstAmount.toFixed(2)}</div>
-                        <span className="text-[10px] text-amber-600 font-sans">({row.igstRate}%)</span>
-                      </td>
-                    )}
-
                     {/* Row Total */}
                     <td className="py-3 px-3 text-right font-mono text-xs font-bold text-slate-900">
                       ₹{row.rowTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
@@ -1038,12 +1103,7 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
                 </div>
               )}
 
-              <div className="flex justify-between text-slate-700 pt-1">
-                <span>Total Tax Collected:</span>
-                <span className="font-mono font-medium">
-                  ₹{totalTax.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                </span>
-              </div>
+             
 
               <div className="flex justify-between items-center pt-3 border-t-2 border-slate-100 text-slate-900">
                 <span className="font-bold text-base">Grand Total (Rupees):</span>
@@ -1067,10 +1127,10 @@ export default function InvoiceCreate({ companySetting, onInvoiceCreated, onCanc
           <button
             type="submit"
             disabled={loading}
-            className="flex items-center space-x-2 px-7 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-md shadow-indigo-100 transition-all disabled:opacity-50"
+            className="flex items-center space-x-2 px-7 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-md shadow-indigo-100 transition-all disabled:opacity-50 cursor-pointer"
           >
             <Save className="w-5 h-5" />
-            <span>{loading ? 'Generating Invoice...' : 'Generate & Save Invoice'}</span>
+            <span>{loading ? 'Saving...' : 'Save Invoice'}</span>
           </button>
         </div>
       </form>

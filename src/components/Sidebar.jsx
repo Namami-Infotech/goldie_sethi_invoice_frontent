@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  LayoutDashboard,
   Receipt,
   PlusCircle,
   Package,
@@ -21,12 +20,6 @@ export default function Sidebar({
 }) {
   const navItems = [
     {
-      id: 'dashboard',
-      label: 'Dashboard',
-      icon: LayoutDashboard,
-      desc: 'Overview & Stats'
-    },
-    {
       id: 'invoices',
       label: 'Invoices',
       icon: Receipt,
@@ -40,9 +33,9 @@ export default function Sidebar({
     },
     {
       id: 'users',
-      label: 'Users & Roles',
+      label: 'Clients',
       icon: Users,
-      desc: 'Clients & Admins'
+      desc: 'Manage clients'
     },
     {
       id: 'settings',
@@ -77,7 +70,7 @@ export default function Sidebar({
         <div className="h-16 px-4 flex items-center justify-between border-b border-slate-800/80 flex-shrink-0">
           <div
             className="flex items-center space-x-2.5 cursor-pointer group"
-            onClick={() => handleNavClick('dashboard')}
+            onClick={() => handleNavClick('invoices')}
           >
             <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/25 group-hover:scale-105 transition-transform flex-shrink-0">
               <Receipt className="w-5 h-5" />

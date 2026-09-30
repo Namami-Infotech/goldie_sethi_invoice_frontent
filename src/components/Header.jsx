@@ -16,7 +16,6 @@ export default function Header({
   setMobileOpen
 }) {
   const titles = {
-    dashboard: { title: 'Dashboard', subtitle: 'Overview, analytics & financial summary' },
     invoices: { title: 'Invoices Directory', subtitle: 'Manage, search and print issued GST invoices' },
     'create-invoice': { title: 'Generate Tax Invoice', subtitle: 'Automated Dual-GST calculation based on state' },
     items: { title: 'Items Catalog', subtitle: 'Products, services, HSN/SAC codes and rates' },

@@ -63,14 +63,18 @@ body {
     font-size: 11pt !important;
   }
 
-  /* Hide everything on the page that is not the invoice */
+  /* Hide everything on the page that is not the invoice modal */
+  body > #root > div > *:not(#invoice-modal-root),
   .no-print,
+  .print-hidden,
+  .print\:hidden,
   aside,
   header,
   nav,
-  button,
-  .print-hidden {
+  main,
+  button {
     display: none !important;
+    visibility: hidden !important;
   }
 
   /* Modal overlay reset to print sheet */

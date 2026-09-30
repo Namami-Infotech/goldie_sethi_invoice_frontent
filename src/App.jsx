@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
-import Dashboard from './components/Dashboard';
 import ItemModule from './components/ItemModule';
 import UserModule from './components/UserModule';
 import SettingModule from './components/SettingModule';
@@ -26,7 +25,7 @@ const muiTheme = createTheme({
 });
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('invoices');
   const [companySetting, setCompanySetting] = useState(null);
   const [viewingInvoice, setViewingInvoice] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -57,8 +56,8 @@ export default function App() {
     }
   }, [companySetting]);
 
-  const handleInvoiceCreated = (newInvoice) => {
-    setViewingInvoice(newInvoice);
+  const handleInvoiceCreated = () => {
+    setViewingInvoice(null);
     setActiveTab('invoices');
   };
 
@@ -86,7 +85,7 @@ export default function App() {
         />
 
         {/* Right Main Content Panel (offset by sidebar width on lg screens) */}
-        <div className="flex-1 lg:pl-64 flex flex-col min-h-screen min-w-0">
+        <div className="flex-1 lg:pl-64 flex flex-col min-h-screen min-w-0 no-print print:hidden">
           {/* Top Header Bar */}
           <Header
             activeTab={activeTab}
@@ -96,15 +95,7 @@ export default function App() {
           />
 
           {/* Main Views Container */}
-          <main className={`flex-1 w-full mx-auto ${activeTab === 'dashboard' ? 'p-3 sm:p-4 max-w-7xl flex flex-col min-h-0 h-[calc(100vh-4rem)]' : 'p-4 sm:p-6 lg:p-8 max-w-7xl'}`}>
-            {activeTab === 'dashboard' && (
-              <Dashboard
-                setActiveTab={setActiveTab}
-                onSelectInvoice={(inv) => setViewingInvoice(inv)}
-                companySetting={companySetting}
-              />
-            )}
-
+          <main className="flex-1 w-full mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl no-print print:hidden">
             {activeTab === 'invoices' && (
               <InvoiceList
                 onSelectInvoice={(inv) => setViewingInvoice(inv)}

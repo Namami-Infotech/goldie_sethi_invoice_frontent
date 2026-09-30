@@ -93,19 +93,10 @@ export default function ItemModule() {
     setModalOpen(true);
   };
 
-  // Real-time computed amounts for the modal form
-  const calcTaxable = (Number(formData.qty) || 0) * (Number(formData.pricePerUnit) || 0);
-  const calcGstAmount = Number(((calcTaxable * (Number(formData.gstRate) || 0)) / 100).toFixed(2));
-  const calcTotalAmount = Number((calcTaxable + calcGstAmount).toFixed(2));
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name.trim()) {
       setError('Item Name is required');
-      return;
-    }
-    if (formData.pricePerUnit === '' || Number(formData.pricePerUnit) < 0) {
-      setError('Price per unit must be 0 or greater');
       return;
     }
 
@@ -138,39 +129,6 @@ export default function ItemModule() {
 
   return (
     <div className="space-y-6">
-      {/* Top Header Card */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center space-x-2">
-            <span className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
-              <Package className="w-5 h-5" />
-            </span>
-            <h1 className="text-xl font-bold text-slate-900">Item / Product Module</h1>
-          </div>
-          <p className="text-sm text-slate-500 mt-1">
-            Manage your inventory, HSN/SAC classifications, GST slabs, and Unit pricing.
-          </p>
-        </div>
-
-        <div className="flex items-center space-x-3">
-          {/* <button
-            onClick={fetchItems}
-            className="p-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
-            title="Refresh"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button> */}
-          <button
-            onClick={openAddModal}
-            className="flex items-center space-x-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium shadow-sm transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add New Item</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Filter & Search Bar */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="relative w-full sm:w-96">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -182,9 +140,17 @@ export default function ItemModule() {
             className="w-full h-10 pl-10 pr-4 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-2xs transition-all"
           />
         </div>
-        <div className="text-xs text-slate-500 font-medium w-full sm:w-auto text-right">
-          Total Items: <span className="font-bold text-slate-900">{items.length}</span>
+          <div className="flex items-center space-x-3">
+          
+          <button
+            onClick={openAddModal}
+            className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium shadow-sm transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add New Item</span>
+          </button>
         </div>
+        
       </div>
 
       {/* Items Table */}
@@ -193,28 +159,24 @@ export default function ItemModule() {
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
               <tr>
-                <th className="py-3.5 px-4">#</th>
+                <th className="py-3.5 px-4 w-16">#</th>
                 <th className="py-3.5 px-4">Item Name</th>
-                <th className="py-3.5 px-4">HSN / SAC</th>
-                <th className="py-3.5 px-4 text-center">Qty & Unit</th>
-                <th className="py-3.5 px-4 text-right">Price / Unit (₹)</th>
-                <th className="py-3.5 px-4 text-center">GST Rate</th>
-                <th className="py-3.5 px-4 text-right">GST (₹)</th>
-                <th className="py-3.5 px-4 text-right">Total Amount (₹)</th>
-                <th className="py-3.5 px-4 text-center">Actions</th>
+                <th className="py-3.5 px-4">HSN / SAC Code</th>
+                <th className="py-3.5 px-4 text-center">Unit</th>
+                <th className="py-3.5 px-4 text-center w-28">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading && items.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="py-12 text-center text-slate-400">
+                  <td colSpan="5" className="py-12 text-center text-slate-400">
                     <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500" />
                     Loading items catalog...
                   </td>
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="py-12 text-center text-slate-500">
+                  <td colSpan="5" className="py-12 text-center text-slate-500">
                     No items found. Click "Add New Item" to create one.
                   </td>
                 </tr>
@@ -229,7 +191,7 @@ export default function ItemModule() {
                     </td>
                     <td className="py-3.5 px-4 font-mono text-xs">
                       {item.hsnSac ? (
-                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 font-medium">
                           {item.hsnSac}
                         </span>
                       ) : (
@@ -237,22 +199,9 @@ export default function ItemModule() {
                       )}
                     </td>
                     <td className="py-3.5 px-4 text-center">
-                      <span className="font-semibold text-slate-800">{item.qty}</span>{' '}
-                      <span className="text-xs text-slate-500">{item.unit}</span>
-                    </td>
-                    <td className="py-3.5 px-4 text-right font-medium text-slate-900">
-                      ₹{Number(item.pricePerUnit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="py-3.5 px-4 text-center">
-                      <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                        {item.gstRate}%
+                      <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                        {item.unit || 'Pcs'}
                       </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-right font-medium text-emerald-700">
-                      ₹{Number(item.gstAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="py-3.5 px-4 text-right font-bold text-slate-900">
-                      ₹{Number(item.totalAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
                     <td className="py-3.5 px-4 text-center">
                       <div className="flex items-center justify-center space-x-2">
@@ -359,74 +308,7 @@ export default function ItemModule() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                    Qty
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    step="any"
-                    value={formData.qty}
-                    onChange={(e) => setFormData({ ...formData, qty: e.target.value })}
-                    className="w-full h-10 px-3.5 border border-slate-200 rounded-xl text-sm text-center font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all shadow-2xs"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                    Price / Unit (₹) *
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="any"
-                    required
-                    placeholder="0.00"
-                    value={formData.pricePerUnit}
-                    onChange={(e) => setFormData({ ...formData, pricePerUnit: e.target.value })}
-                    className="w-full h-10 px-3.5 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all shadow-2xs"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                    GST Rate (%)
-                  </label>
-                  <select
-                    value={formData.gstRate}
-                    onChange={(e) => setFormData({ ...formData, gstRate: Number(e.target.value) })}
-                    className="w-full h-10 px-2.5 border border-slate-200 rounded-xl text-sm bg-white font-bold text-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all shadow-2xs"
-                  >
-                    {GST_RATES.map((rate) => (
-                      <option key={rate} value={rate}>
-                        {rate}%
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
 
-              {/* Live Preview Calculation Box */}
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs space-y-1.5">
-                <div className="flex justify-between text-slate-600">
-                  <span>Taxable Amount (Qty × Rate):</span>
-                  <span className="font-semibold text-slate-800">
-                    ₹{calcTaxable.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-                <div className="flex justify-between text-emerald-700">
-                  <span>GST in Rupees ({formData.gstRate}%):</span>
-                  <span className="font-semibold">
-                    ₹{calcGstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-                <div className="flex justify-between pt-1.5 border-t border-slate-200 text-slate-900 font-bold text-sm">
-                  <span>Total Amount in Rupees:</span>
-                  <span className="text-indigo-600">
-                    ₹{calcTotalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-              </div>
 
               <div className="flex justify-end space-x-2 pt-3">
                 <button

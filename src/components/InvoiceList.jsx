@@ -24,6 +24,64 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [summaryStats, setSummaryStats] = useState({
+    totalCount: 0,
+    totalAmount: 0,
+    paidCount: 0,
+    paidAmount: 0,
+    pendingCount: 0,
+    pendingAmount: 0,
+    cancelledCount: 0,
+    cancelledAmount: 0
+  });
+
+  const fetchSummaryStats = async () => {
+    try {
+      const res = await invoiceService.getAll('', '');
+      if (res.data?.success) {
+        const all = res.data.data || [];
+        let totalAmount = 0;
+        let paidCount = 0;
+        let paidAmount = 0;
+        let pendingCount = 0;
+        let pendingAmount = 0;
+        let cancelledCount = 0;
+        let cancelledAmount = 0;
+
+        all.forEach((inv) => {
+          const amt = Number(inv.grandTotal) || 0;
+          totalAmount += amt;
+          if (inv.status === 'PAID') {
+            paidCount++;
+            paidAmount += amt;
+          } else if (inv.status === 'PENDING') {
+            pendingCount++;
+            pendingAmount += amt;
+          } else if (inv.status === 'CANCELLED') {
+            cancelledCount++;
+            cancelledAmount += amt;
+          }
+        });
+
+        setSummaryStats({
+          totalCount: all.length,
+          totalAmount,
+          paidCount,
+          paidAmount,
+          pendingCount,
+          pendingAmount,
+          cancelledCount,
+          cancelledAmount
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching invoice summary stats:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchSummaryStats();
+  }, []);
 
   const fetchInvoices = async () => {
     try {
@@ -60,6 +118,7 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
     try {
       await invoiceService.updateStatus(id, newStatus);
       fetchInvoices();
+      fetchSummaryStats();
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to update status');
     }
@@ -72,6 +131,7 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
       await invoiceService.delete(deleteTarget.id);
       setDeleteTarget(null);
       fetchInvoices();
+      fetchSummaryStats();
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to delete invoice');
     } finally {
@@ -81,36 +141,127 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center space-x-2">
-            <span className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
-              <Receipt className="w-5 h-5" />
+    
+
+      {/* Top Stat Summary Cards: Total, Paid, Pending, Cancelled (Compact Height) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Total Invoices */}
+        <div
+          onClick={() => setStatusFilter('')}
+          className={`bg-white px-3.5 py-2.5 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-xs flex flex-col justify-between ${
+            statusFilter === ''
+              ? 'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/20'
+              : 'border-slate-200 hover:border-indigo-200'
+          }`}
+          title="Filter: All Invoices"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              Total Invoices
             </span>
-            <h1 className="text-xl font-bold text-slate-900">Invoices Directory</h1>
+            <span className="p-1 rounded-md bg-indigo-50 text-indigo-600">
+              <Receipt className="w-3.5 h-3.5" />
+            </span>
           </div>
-          <p className="text-sm text-slate-500 mt-1">
-            Track and manage all issued GST invoices with tax breakdown.
-          </p>
+          <div className="flex items-baseline justify-between mt-1.5">
+            <span className="text-lg font-black text-slate-900 font-mono leading-none">
+              {summaryStats.totalCount}
+            </span>
+            <span className="text-xs text-slate-500 font-mono font-medium">
+              ₹{summaryStats.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+            </span>
+          </div>
         </div>
 
-        <div className="flex items-center space-x-3">
-          
-          <button
-            onClick={onCreateNew}
-            className="flex items-center space-x-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium shadow-sm transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create New Invoice</span>
-          </button>
+        {/* Paid Invoices */}
+        <div
+          onClick={() => setStatusFilter('PAID')}
+          className={`bg-white px-3.5 py-2.5 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-xs flex flex-col justify-between ${
+            statusFilter === 'PAID'
+              ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/20'
+              : 'border-slate-200 hover:border-emerald-200'
+          }`}
+          title="Filter: Paid Invoices"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600">
+              Paid Invoices
+            </span>
+            <span className="p-1 rounded-md bg-emerald-50 text-emerald-600">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+            </span>
+          </div>
+          <div className="flex items-baseline justify-between mt-1.5">
+            <span className="text-lg font-black text-emerald-700 font-mono leading-none">
+              {summaryStats.paidCount}
+            </span>
+            <span className="text-xs text-slate-500 font-mono font-medium">
+              ₹{summaryStats.paidAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+            </span>
+          </div>
+        </div>
+
+        {/* Pending Invoices */}
+        <div
+          onClick={() => setStatusFilter('PENDING')}
+          className={`bg-white px-3.5 py-2.5 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-xs flex flex-col justify-between ${
+            statusFilter === 'PENDING'
+              ? 'border-amber-500 ring-2 ring-amber-500/20 bg-amber-50/20'
+              : 'border-slate-200 hover:border-amber-200'
+          }`}
+          title="Filter: Pending Invoices"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600">
+              Pending Invoices
+            </span>
+            <span className="p-1 rounded-md bg-amber-50 text-amber-600">
+              <Clock className="w-3.5 h-3.5" />
+            </span>
+          </div>
+          <div className="flex items-baseline justify-between mt-1.5">
+            <span className="text-lg font-black text-amber-700 font-mono leading-none">
+              {summaryStats.pendingCount}
+            </span>
+            <span className="text-xs text-slate-500 font-mono font-medium">
+              ₹{summaryStats.pendingAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+            </span>
+          </div>
+        </div>
+
+        {/* Cancelled Invoices */}
+        <div
+          onClick={() => setStatusFilter('CANCELLED')}
+          className={`bg-white px-3.5 py-2.5 rounded-xl border transition-all cursor-pointer shadow-2xs hover:shadow-xs flex flex-col justify-between ${
+            statusFilter === 'CANCELLED'
+              ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-50/20'
+              : 'border-slate-200 hover:border-rose-200'
+          }`}
+          title="Filter: Cancelled Invoices"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-rose-600">
+              Cancel Invoices
+            </span>
+            <span className="p-1 rounded-md bg-rose-50 text-rose-600">
+              <Ban className="w-3.5 h-3.5" />
+            </span>
+          </div>
+          <div className="flex items-baseline justify-between mt-1.5">
+            <span className="text-lg font-black text-rose-700 font-mono leading-none">
+              {summaryStats.cancelledCount}
+            </span>
+            <span className="text-xs text-slate-500 font-mono font-medium">
+              ₹{summaryStats.cancelledAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Filter & Search Bar */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="flex items-center space-x-1 p-1 bg-slate-100 rounded-xl w-full sm:w-auto overflow-x-auto">
-          {['', 'PENDING', 'PAID', 'CANCELLED', 'INACTIVE'].map((st) => (
+          {['', 'PENDING', 'PAID', 'CANCELLED'].map((st) => (
             <button
               key={st}
               onClick={() => setStatusFilter(st)}
@@ -135,6 +286,15 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
             className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={onCreateNew}
+            className="flex items-center space-x-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium shadow-sm transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Create New Invoice</span>
+          </button>
+        </div>
       </div>
 
       {/* Invoices Table */}
@@ -146,7 +306,6 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
                 <th className="py-3.5 px-4">Invoice #</th>
                 <th className="py-3.5 px-4">Date</th>
                 <th className="py-3.5 px-4">Customer Name</th>
-                <th className="py-3.5 px-4">State & GST Rule</th>
                 <th className="py-3.5 px-4 text-right">Taxable (₹)</th>
                 <th className="py-3.5 px-4 text-right">Tax (₹)</th>
                 <th className="py-3.5 px-4 text-right font-bold">Total (₹)</th>
@@ -157,14 +316,14 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
             <tbody className="divide-y divide-slate-100">
               {loading && invoices.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="py-12 text-center text-slate-400">
+                  <td colSpan="8" className="py-12 text-center text-slate-400">
                     <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500" />
                     Loading invoices...
                   </td>
                 </tr>
               ) : invoices.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="py-12 text-center text-slate-500">
+                  <td colSpan="8" className="py-12 text-center text-slate-500">
                     No invoices generated yet. Click "Create New Invoice" to start!
                   </td>
                 </tr>
@@ -184,21 +343,6 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
                     <td className="py-3.5 px-4">
                       <div className="font-semibold text-slate-900">{inv.customerName}</div>
                       <div className="text-xs text-slate-400">{inv.customerCity || ''}</div>
-                    </td>
-
-                    <td className="py-3.5 px-4 text-xs">
-                      <span className="font-medium text-slate-800">{inv.customerState}</span>
-                      <div className="mt-0.5">
-                        {inv.isSameState ? (
-                          <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                            CGST + SGST
-                          </span>
-                        ) : (
-                          <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                            IGST
-                          </span>
-                        )}
-                      </div>
                     </td>
 
                     <td className="py-3.5 px-4 text-right font-mono text-xs text-slate-700">
@@ -230,7 +374,6 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
                         <option value="PENDING">PENDING</option>
                         <option value="PAID">PAID</option>
                         <option value="CANCELLED">CANCELLED</option>
-                        <option value="INACTIVE">INACTIVE</option>
                       </select>
                     </td>
 
@@ -242,15 +385,15 @@ export default function InvoiceList({ onSelectInvoice, onCreateNew, companyState
                           title="View / Print / Download A4 PDF"
                         >
                           <Printer className="w-3.5 h-3.5" />
-                          <span>Print / PDF</span>
+                          <span>Print</span>
                         </button>
-                        <button
+                        {/* <button
                           onClick={() => setDeleteTarget({ id: inv.id, invoiceNumber: inv.invoiceNumber })}
                           className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                           title="Delete Invoice"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        </button> */}
                       </div>
                     </td>
                   </tr>

@@ -35,10 +35,9 @@ export default function UserModule({ companyState }) {
     name: '',
     role: 'USER',
     fullAddress: '',
-    state: 'Gujarat',
+    state: companyState || 'Gujarat',
     city: '',
-    area: '',
-    pincode: '',
+    gstNumber: '',
     contactNumber: '',
     email: ''
   });
@@ -80,8 +79,7 @@ export default function UserModule({ companyState }) {
       fullAddress: '',
       state: companyState || 'Gujarat',
       city: '',
-      area: '',
-      pincode: '',
+      gstNumber: '',
       contactNumber: '',
       email: ''
     });
@@ -91,14 +89,14 @@ export default function UserModule({ companyState }) {
 
   const openEditModal = (user) => {
     setEditingUser(user);
+    const existingGst = user.gstNumber || user.gstin || (user.pincode && user.pincode.length > 6 ? user.pincode : '') || '';
     setFormData({
-      name: user.name,
-      role: user.role,
+      name: user.name || '',
+      role: user.role || 'USER',
       fullAddress: user.fullAddress || '',
-      state: user.state || 'Gujarat',
+      state: user.state || companyState || 'Gujarat',
       city: user.city || '',
-      area: user.area || '',
-      pincode: user.pincode || '',
+      gstNumber: existingGst,
       contactNumber: user.contactNumber || '',
       email: user.email || ''
     });
@@ -122,15 +120,30 @@ export default function UserModule({ companyState }) {
     }
 
     try {
+      const payload = {
+        name: formData.name.trim(),
+        role: formData.role || 'USER',
+        fullAddress: formData.fullAddress || '',
+        state: formData.state.trim(),
+        city: formData.city || '',
+        gstNumber: formData.gstNumber || '',
+        pincode: formData.gstNumber || '', // Compatibility with servers storing GST in pincode column
+        area: '',
+        contactNumber: formData.contactNumber.trim(),
+        email: formData.email || '',
+        status: editingUser ? (editingUser.status || 'ACTIVE') : 'ACTIVE'
+      };
+
       if (editingUser) {
-        await userService.update(editingUser.id, formData);
+        await userService.update(editingUser.id, payload);
       } else {
-        await userService.create(formData);
+        await userService.create(payload);
       }
       setModalOpen(false);
-      fetchUsers();
+      await fetchUsers();
     } catch (err) {
-      setError(err.response?.data?.message || 'Error saving user');
+      console.error('Error saving user:', err);
+      setError(err.response?.data?.message || err.message || 'Error saving user');
     }
   };
 
@@ -155,42 +168,10 @@ export default function UserModule({ companyState }) {
 
   return (
     <div className="space-y-6">
-      {/* Top Header Card */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center space-x-2">
-            <span className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
-              <Users className="w-5 h-5" />
-            </span>
-            <h1 className="text-xl font-bold text-slate-900">User & Client Management</h1>
-          </div>
-          <p className="text-sm text-slate-500 mt-1">
-            Manage USER (clients/buyers) and ADMIN roles with full address, state, and contact details.
-          </p>
-        </div>
-
-        <div className="flex items-center space-x-3">
-          {/* <button
-            onClick={fetchUsers}
-            className="p-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
-            title="Refresh"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button> */}
-          <button
-            onClick={() => openAddModal('USER')}
-            className="flex items-center space-x-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium shadow-sm transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add User / Client</span>
-          </button>
-        </div>
-      </div>
-
       {/* Role Filter Tabs & Search */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-3">
         {/* Role tabs */}
-        <div className="flex items-center space-x-1 p-1 bg-slate-100 rounded-xl w-full sm:w-auto">
+        <div className="flex items-center space-x-1 p-1 bg-slate-100 rounded-xl w-full lg:w-auto overflow-x-auto">
           <button
             onClick={() => setRoleFilter('')}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
@@ -225,16 +206,26 @@ export default function UserModule({ companyState }) {
           </button>
         </div>
 
-        {/* Search */}
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search by name, state, phone, email..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-10 pl-10 pr-4 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-2xs transition-all"
-          />
+        {/* Right side: Search & Add Button */}
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+          <div className="relative w-full sm:w-80">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search by name, state, GSTIN, city, phone..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full h-10 pl-10 pr-4 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-2xs transition-all"
+            />
+          </div>
+
+          <button
+            onClick={() => openAddModal('USER')}
+            className="w-full sm:w-auto h-10 flex items-center justify-center space-x-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium shadow-sm transition-all whitespace-nowrap cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Client</span>
+          </button>
         </div>
       </div>
 
@@ -245,10 +236,10 @@ export default function UserModule({ companyState }) {
             <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
               <tr>
                 <th className="py-3.5 px-4">#</th>
-                <th className="py-3.5 px-4">Name & Role</th>
+                <th className="py-3.5 px-4">Client Name</th>
                 <th className="py-3.5 px-4">Contact Info</th>
-                <th className="py-3.5 px-4">State & GST Rule</th>
-                <th className="py-3.5 px-4">City / Area / Pincode</th>
+                <th className="py-3.5 px-4">State & GST Number</th>
+                <th className="py-3.5 px-4">City</th>
                 <th className="py-3.5 px-4">Full Address</th>
                 <th className="py-3.5 px-4 text-center">Actions</th>
               </tr>
@@ -269,11 +260,6 @@ export default function UserModule({ companyState }) {
                 </tr>
               ) : (
                 paginatedUsers.map((user, idx) => {
-                  const isSameAsCompany =
-                    companyState &&
-                    user.state &&
-                    user.state.trim().toLowerCase() === companyState.trim().toLowerCase();
-
                   return (
                     <tr key={user.id} className="hover:bg-slate-50/70 transition-colors">
                       <td className="py-3.5 px-4 text-slate-400 text-xs font-mono">
@@ -314,22 +300,21 @@ export default function UserModule({ companyState }) {
                           <MapPin className="w-3.5 h-3.5 text-indigo-500" />
                           <span>{user.state}</span>
                         </div>
-                        <div className="mt-1">
-                          {isSameAsCompany ? (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200" title="Same state as company: splits to CGST + SGST">
-                              CGST + SGST (Intra)
-                            </span>
+                        {(() => {
+                          const gst = user.gstNumber || user.gstin || (user.pincode && user.pincode.length > 6 ? user.pincode : '');
+                          return gst ? (
+                            <div className="mt-1 text-[11px] font-mono text-slate-700">
+                              <span className="text-slate-400 font-normal">GSTIN: </span>
+                              <span className="font-semibold text-slate-900">{gst}</span>
+                            </div>
                           ) : (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200" title="Different state than company: applies IGST">
-                              IGST (Inter-state)
-                            </span>
-                          )}
-                        </div>
+                            <div className="mt-1 text-slate-400 text-xs font-mono">—</div>
+                          );
+                        })()}
                       </td>
 
                       <td className="py-3.5 px-4 text-xs text-slate-700">
-                        <div>{user.city || '—'} {user.pincode ? `(${user.pincode})` : ''}</div>
-                        {user.area && <div className="text-slate-400 text-[11px]">{user.area}</div>}
+                        <div className="font-medium text-slate-800">{user.city || '—'}</div>
                       </td>
 
                       <td className="py-3.5 px-4 text-xs text-slate-600 max-w-xs truncate" title={user.fullAddress}>
@@ -389,7 +374,7 @@ export default function UserModule({ companyState }) {
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 transform transition-all">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <h3 className="text-lg font-bold text-slate-900">
-                {editingUser ? 'Edit User Details' : 'Add New User'}
+                {editingUser ? 'Edit Client Details' : 'Add Client'}
               </h3>
               <button
                 onClick={() => setModalOpen(false)}
@@ -410,7 +395,7 @@ export default function UserModule({ companyState }) {
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-2">
                   <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                    Full Name *
+                    Full Name /Company Name*
                   </label>
                   <input
                     type="text"
@@ -423,24 +408,7 @@ export default function UserModule({ companyState }) {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                    Role *
-                  </label>
-                  <select
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-xl text-sm bg-white font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all shadow-2xs"
-                  >
-                    <option value="USER">USER (Client)</option>
-                    <option value="ADMIN">ADMIN</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* State and City */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                    State (Crucial for GST) *
+                    State *
                   </label>
                   <select
                     value={formData.state}
@@ -454,6 +422,10 @@ export default function UserModule({ companyState }) {
                     ))}
                   </select>
                 </div>
+              </div>
+
+              {/* State and City */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                     City
@@ -466,32 +438,16 @@ export default function UserModule({ companyState }) {
                     className="w-full h-10 px-3.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all shadow-2xs"
                   />
                 </div>
-              </div>
-
-              {/* Area & Pincode */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
+                 <div>
                   <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                    Area
+                   GST Number (optional)
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Ring Road"
-                    value={formData.area}
-                    onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-                    className="w-full h-10 px-3.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all shadow-2xs"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                    Pincode
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 395002"
-                    value={formData.pincode}
-                    onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
-                    className="w-full h-10 px-3.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all shadow-2xs"
+                    placeholder="e.g. 24AAACN1234F1Z8"
+                    value={formData.gstNumber}
+                    onChange={(e) => setFormData({ ...formData, gstNumber: e.target.value.toUpperCase() })}
+                    className="w-full h-10 px-3.5 border border-slate-200 rounded-xl text-sm uppercase focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all shadow-2xs font-mono"
                   />
                 </div>
               </div>
@@ -539,19 +495,6 @@ export default function UserModule({ companyState }) {
                 />
               </div>
 
-              {/* Tax rule preview callout */}
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
-                <span className="font-semibold text-slate-700">GST Rule for this user: </span>
-                {companyState && formData.state.trim().toLowerCase() === companyState.trim().toLowerCase() ? (
-                  <span className="text-blue-700 font-medium">
-                    Same State as Company ({formData.state}) &rarr; <strong>CGST (50%) + SGST (50%)</strong>
-                  </span>
-                ) : (
-                  <span className="text-amber-700 font-medium">
-                    Different State from Company ({companyState} vs {formData.state}) &rarr; <strong>IGST (100%)</strong>
-                  </span>
-                )}
-              </div>
 
               <div className="flex justify-end space-x-2 pt-3">
                 <button
@@ -565,7 +508,7 @@ export default function UserModule({ companyState }) {
                   type="submit"
                   className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm"
                 >
-                  {editingUser ? 'Update User' : 'Create User'}
+                  {editingUser ? 'Update' : 'Submit'}
                 </button>
               </div>
             </form>

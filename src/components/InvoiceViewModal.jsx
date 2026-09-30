@@ -206,7 +206,10 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-6 print:p-0 print:bg-white print:static">
+    <div
+      id="invoice-modal-root"
+      className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-6 print:p-0 print:bg-white print:static"
+    >
       <div className="bg-white rounded-lg max-w-4xl w-full shadow-2xl border border-slate-300 overflow-hidden my-auto print:shadow-none print:border-none print:w-full print:max-w-full print:rounded-none">
         {/* Action Header Bar (Hidden during Print) */}
         <div className="no-print bg-slate-900 text-white px-5 py-3 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800">
@@ -297,7 +300,7 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
                   className="p-3 text-black align-top"
                   style={{ borderBottom: '1px solid #000000' }}
                 >
-                  <h2 className="text-lg font-extrabold uppercase tracking-wide text-black">
+                  <h2 className="text-xl font-black uppercase tracking-wide text-black text-center pb-1">
                     {company.name}
                   </h2>
                   <div className="flex justify-between items-start text-xs text-black mt-1">
@@ -367,6 +370,12 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
                     <span className="font-semibold">State:</span>{' '}
                     <span className="font-bold">{invoice.customerState}</span>
                   </p>
+                  {invoice.customerGstin && (
+                    <p className="mt-0.5">
+                      <span className="font-semibold">GSTIN:</span>{' '}
+                      <span className="font-mono font-bold">{invoice.customerGstin}</span>
+                    </p>
+                  )}
                 </td>
 
                 {/* Invoice Details */}
