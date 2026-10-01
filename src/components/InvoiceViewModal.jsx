@@ -549,7 +549,16 @@ export default function InvoiceViewModal({ invoice, companySetting, onClose, onS
                 </td>
               </tr>
 
-              {/* ROW: DUAL SECTION (TAX SUMMARY ON LEFT & INVOICE TOTALS ON RIGHT) */}
+              {/* ROW: REVERSE CHARGE */}
+              <tr style={{ borderBottom: '1px solid #000000' }}>
+                <td
+                  colSpan={8}
+                  className="py-1.5 px-3 text-xs text-left bg-white text-black"
+                >
+                  <span className="font-semibold">Amount of Tax subject to reverse charge:</span>{' '}
+                  <span>{invoice.reverseCharge || 'No'}</span>
+                </td>
+              </tr>
               <tr>
                 {/* Left Side: Tax Summary (Spans 5 Columns) */}
                 <td
