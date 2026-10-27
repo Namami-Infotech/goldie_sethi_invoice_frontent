@@ -8,6 +8,7 @@ import SettingModule from './components/SettingModule';
 import InvoiceCreate from './components/InvoiceCreate';
 import InvoiceList from './components/InvoiceList';
 import InvoiceViewModal from './components/InvoiceViewModal';
+import GstReports from './components/GstReports';
 import Login from './components/Login';
 import { settingService, invoiceService, authService } from './services/api';
 
@@ -118,7 +119,7 @@ export default function App() {
           />
 
           {/* Main Views Container */}
-          <main className="flex-1 w-full mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl no-print print:hidden">
+          <main className="flex-1 w-full mx-auto px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-5 max-w-7xl no-print print:hidden">
             {activeTab === 'invoices' && (
               <InvoiceList
                 onSelectInvoice={(inv) => setViewingInvoice(inv)}
@@ -136,6 +137,13 @@ export default function App() {
             )}
 
             {activeTab === 'items' && <ItemModule />}
+
+            {activeTab === 'reports' && (
+              <GstReports
+                companySetting={companySetting}
+                onSelectInvoice={(inv) => setViewingInvoice(inv)}
+              />
+            )}
 
             {activeTab === 'users' && (
               <UserModule companyState={companySetting?.state} />

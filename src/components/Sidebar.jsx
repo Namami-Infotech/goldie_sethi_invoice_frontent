@@ -9,7 +9,8 @@ import {
   Sparkles,
   ChevronRight,
   X,
-  LogOut
+  LogOut,
+  FileSpreadsheet
 } from 'lucide-react';
 
 export default function Sidebar({
@@ -33,6 +34,12 @@ export default function Sidebar({
       label: 'Items Catalog',
       icon: Package,
       desc: 'HSN/SAC & Rates'
+    },
+    {
+      id: 'reports',
+      label: 'GST Reports',
+      icon: FileSpreadsheet,
+      desc: 'Sales, HSN & Tax Liability'
     },
     {
       id: 'users',
